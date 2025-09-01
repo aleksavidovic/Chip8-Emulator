@@ -1,0 +1,9 @@
+build/
+docs/
+
+*.o
+*.out
+*.exe
+*.swp
+
+roms/

@@ -3,10 +3,13 @@
 #include <SDL2/SDL.h>
 #include <stdbool.h>
 #include "chip8.h"
+#include <stdlib.h>
+#include <time.h>
 
 void chip8_initialize(chip8_t* chip8) {
     memset(chip8, 0, sizeof(chip8_t));
     chip8->pc = 0x200;
+    srand(time(NULL));
 }
 
 void chip8_load_rom(chip8_t* chip8, const char* filename) {
@@ -218,7 +221,64 @@ void chip8_emulate_cycle(chip8_t* chip8) { // Fetch->Decode->Execute opcodes
             }
             break;
         }
+        case 0x9000: { // 9xy0 -> SNE Vx, Vy
+            /*
+                Skip next instruction if Vx != Vy. 
+                The values of Vx and Vy are compared, and if they are not equal, 
+                the program counter is increased by 2.
+            */ 
+            if ( chip8->v_registers[x] != chip8->v_registers[y] )
+                chip8->pc += 2;
+            break;
+        }
+        case 0xA000: { // Annn -> LD I, addr
+            /*
+                Set I = nnn. 
+                The value of register I is set to nnn.
+            */
+            chip8->i_reg = nnn; 
+            break;
+        }
+        case 0xB000: { // Bnnn -> JP V0, addr
+            /*
+                Jump to location nnn + V0. 
+                The program counter is set to nnn plus the value of V0.
+            */
+            chip8->pc = chip8->v_registers[0x0] + nnn; 
+            break;
+        }
+        case 0xC000: { // Cxkk -> RND Vx, byte 
+            /*
+                Set Vx = random byte AND kk. 
+                The interpreter generates a random number from 0 to 255, which is then
+                ANDed with the value kk. The results are stored in Vx. 
+            */
+            chip8->v_registers[x] = (uint8_t)(rand() % 256) & kk;
+            break;
+        }
+        case 0xD000: { // Dxyn -> DRW Vx, Vy, nibble 
+            /*
+                Display n-byte sprite starting at memory location I at (Vx, Vy), set VF = collision. 
+                The interpreter reads n bytes from memory, starting at the address stored in I. 
+                These bytes are then displayed as sprites on screen at coordinates (Vx, Vy). 
+                Sprites are XOR’d onto the existing screen. If this causes any pixels to be erased,
+                VF is set to 1, otherwise it is set to 0. If the sprite is positioned so part of it 
+                is outside the coordinates of the display, it wraps around to the opposite side 
+                of the screen.
+            */
+            uint8_t Vx = chip8->v_registers[x];
+            uint8_t Vy = chip8->v_registers[y];
+            uint16_t I = chip8->i_reg;
+            chip8->v_registers[0xF] = 0u;
+            for (int i = 0; i < (n * 8) ; i++) {
+                if ( chip8->display[ ((Vy * 64) + Vx + i) ] == 1 )
+                    chip8->v_registers[0xF] = 1u;
+                chip8->display[ ((Vy * 64) + Vx + i) ] ^= chip8->memory[I+i];
+            }            
+            break;
+        }
     }
+    
 }
 
 void update_timers(chip8_t* chip8, uint32_t* last_timer_update) {

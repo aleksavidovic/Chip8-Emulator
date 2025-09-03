@@ -3,6 +3,7 @@
 #include <SDL2/SDL.h>
 #include <stdbool.h>
 #include "chip8.h"
+#include "config.h"
 
 // --- Window Dimensions ---
 const int SCALE_FACTOR = 1;
@@ -14,12 +15,19 @@ void handle_input(chip8_t* chip8, bool* running);
 // void log_state();
 
 int main(int argc, char *argv[]) {
+    chip8_config config;
+    if (parse_arguments(argc, argv, &config) != 0) {
+        return 1;
+    }
+    printf("\nPress Enter to continue...");
+
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF) { };
+
     chip8_t chip8;
     chip8_initialize(&chip8);
 
-    if (argc == 2) {
-        chip8_load_rom(&chip8, argv[1]);
-    }
+    
 
     // SDL init
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {

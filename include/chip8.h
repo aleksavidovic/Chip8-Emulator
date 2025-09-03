@@ -10,6 +10,7 @@
 #define NUM_REGISTERS 16
 #define STACK_LEVELS 16
 #define NUM_KEYS 16
+#define FONT_START_ADDRESS 0x50
 
 typedef struct {
     uint8_t memory[MEMORY_SIZE];
@@ -29,5 +30,6 @@ void chip8_initialize(chip8_t* chip8);
 void chip8_load_rom(chip8_t* chip8, const char* filename);
 void chip8_emulate_cycle(chip8_t* chip8);
 void update_timers(chip8_t* chip8, uint32_t* last_timer_update);
+void log_state(chip8_t* chip8);
 
 #endif

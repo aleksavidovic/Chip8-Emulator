@@ -5,7 +5,7 @@
 #include "chip8.h"
 
 // --- Window Dimensions ---
-const int SCALE_FACTOR = 10;
+const int SCALE_FACTOR = 1;
 const int SCREEN_WIDTH = DISPLAY_WIDTH * SCALE_FACTOR;
 const int SCREEN_HEIGHT = DISPLAY_HEIGHT * SCALE_FACTOR;
 
@@ -57,7 +57,7 @@ int main(int argc, char *argv[]) {
         update_timers(&chip8, &last_timer_update);
 
         // Render the display
-        if (chip8.draw_flag) {
+        if (1) {
             render_graphics(renderer, chip8.display);
             chip8.draw_flag = false;
         }

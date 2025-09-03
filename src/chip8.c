@@ -6,10 +6,30 @@
 #include <stdlib.h>
 #include <time.h>
 
+static const uint8_t chip8_font_set[80] = {
+    0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
+    0x20, 0x60, 0x20, 0x20, 0x70, // 1
+    0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
+    0xF0, 0x10, 0xF0, 0x10, 0xF0, // 3
+    0x90, 0x90, 0xF0, 0x10, 0x10, // 4
+    0xF0, 0x80, 0xF0, 0x10, 0xF0, // 5
+    0xF0, 0x80, 0xF0, 0x90, 0xF0, // 6
+    0xF0, 0x10, 0x20, 0x40, 0x40, // 7
+    0xF0, 0x90, 0xF0, 0x90, 0xF0, // 8
+    0xF0, 0x90, 0xF0, 0x10, 0xF0, // 9
+    0xF0, 0x90, 0xF0, 0x90, 0x90, // A
+    0xE0, 0x90, 0xE0, 0x90, 0xE0, // B
+    0xF0, 0x80, 0x80, 0x80, 0xF0, // C
+    0xE0, 0x90, 0x90, 0x90, 0xE0, // D
+    0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
+    0xF0, 0x80, 0xF0, 0x80, 0x80  // F
+};
+
 void chip8_initialize(chip8_t* chip8) {
     memset(chip8, 0, sizeof(chip8_t));
     chip8->pc = 0x200;
     srand(time(NULL));
+    memcpy(&chip8->memory[FONT_START_ADDRESS], chip8_font_set, sizeof(chip8_font_set));
 }
 
 void chip8_load_rom(chip8_t* chip8, const char* filename) {
@@ -34,8 +54,8 @@ void chip8_load_rom(chip8_t* chip8, const char* filename) {
 }
 
 void chip8_emulate_cycle(chip8_t* chip8) { // Fetch->Decode->Execute opcodes 
+    log_state(chip8);
     uint16_t opcode = (chip8->memory[chip8->pc] << 8) | chip8->memory[chip8->pc+1];
-    chip8->pc += 2;
     /*
         most opcodes follow one of the following patterns:
             - ?nnn
@@ -49,18 +69,19 @@ void chip8_emulate_cycle(chip8_t* chip8) { // Fetch->Decode->Execute opcodes
     uint8_t y = (opcode >> 4) & 0x000F;
     uint8_t kk = opcode & 0x00FF;
     uint8_t n = opcode & 0x000F;
-    uint8_t nnn = opcode & 0x0FFF;
+    uint16_t nnn = opcode & 0x0FFF;
 
     switch (opcode & 0xF000) { // get opcode "family"
 
         case 0x0000: { // CLS and RET
             switch (opcode) {
                 case 0x00E0: { // CLS 
-                    memset(chip8->display, 0u, sizeof(chip8->display));
+                    memset(chip8->display, 0, sizeof(chip8->display));
                     break;
                 }
                 case 0x00EE: { // RET
-                    // implement RET logic here
+                    chip8->stack_pointer -= 1;
+                    chip8->pc = chip8->stack[chip8->stack_pointer];
                     break;
                 }
             }
@@ -70,14 +91,14 @@ void chip8_emulate_cycle(chip8_t* chip8) { // Fetch->Decode->Execute opcodes
             chip8->pc = nnn;
             break;
         }
-        case 0x2000: { /// 2nnn -> CALL addr
+        case 0x2000: { /// 2nnn -> CA LL addr
             /*
                 Call subroutine at nnn. The interpreter increments the stack pointer, 
                 then puts the current PC on the top
                 of the stack. The PC is then set to nnn.
             */
-            chip8->stack_pointer++;
             chip8->stack[chip8->stack_pointer] = chip8->pc;
+            chip8->stack_pointer += 1;
             chip8->pc = nnn;
             break;
         }
@@ -270,14 +291,138 @@ void chip8_emulate_cycle(chip8_t* chip8) { // Fetch->Decode->Execute opcodes
             uint8_t Vy = chip8->v_registers[y];
             uint16_t I = chip8->i_reg;
             chip8->v_registers[0xF] = 0u;
-            for (int i = 0; i < (n * 8) ; i++) {
+            for (uint8_t i = 0; i < (n * 8) ; i++) {
                 if ( chip8->display[ ((Vy * 64) + Vx + i) ] == 1 )
                     chip8->v_registers[0xF] = 1u;
                 chip8->display[ ((Vy * 64) + Vx + i) ] ^= chip8->memory[I+i];
             }            
+            chip8->draw_flag = true;
+            break;
+        }
+        case 0xE000: { // E opcode family
+            switch (kk) {
+                case 0x9E: { // SKP Vx
+                    /*
+                        Skip next instruction if key with the value of Vx is pressed. 
+                        Checks the keyboard, and if the key corresponding to the value 
+                        of Vx is currently in the down position, PC is increased by 2. 
+                    */
+                    if (chip8->keypad[x] == 1)
+                        chip8->pc += 2;
+                    break;
+                }
+                case 0xA1: { // SKNP Vx
+                    /*
+                        Skip next instruction if key with the value of Vx is not pressed. 
+                        Checks the keyboard, and if the key corresponding to the value 
+                        of Vx is currently in the up position, PC is increased by 2.
+                    */
+                    if (chip8->keypad[x] == 0)
+                        chip8->pc += 2;
+                    break;
+                }
+            } 
+            break;
+        }
+        case 0xF000: { // F opcode family
+            switch (kk) {
+                case 0x07: { // Fx07 -> LD Vx, DT
+                    /*
+                        Set Vx = delay timer value. The value of DT is placed into Vx.
+                    */
+                    chip8->v_registers[x] = chip8->delay_timer;
+                    break;
+                }
+                case 0x0A: { // Fx0A -> LD Vx, K 
+                    /*
+                        Wait for a key press, store the value of the key in Vx. 
+                        All execution stops until a key is pressed, 
+                        then the value of that key is stored in Vx.
+                    */
+                    uint16_t pc_offset = 2; // substract this from PC to simulate waiting
+                    for (int i = 0; i < NUM_KEYS; i++) {
+                        if (chip8->keypad[i] == 1) {
+                            chip8->v_registers[x] = i;
+                            pc_offset = 0;
+                            break; // Hopefully this breaks only out of for loop?
+                        }
+                    }
+                    chip8->pc -= pc_offset;
+                    break;
+                }
+                case 0x15: { // Fx15 -> LD DT, Vx
+                    /*
+                        Set delay timer = Vx. 
+                        Delay Timer is set equal to the value of Vx.
+                    */
+                    chip8->delay_timer = chip8->v_registers[x];
+                    break;
+                }
+                case 0x18: { // Fx18 -> LD ST, Vx
+                    /*
+                        Set sound timer = Vx. 
+                        Sound Timer is set equal to the value of Vx.
+                    */
+                    chip8->sound_timer = chip8->v_registers[x];
+                    break;
+                }
+                case 0x1E: { // Fx1E -> ADD I, Vx
+                    /*
+                        Set I = I + Vx. 
+                        The values of I and Vx are added, and the results are stored in I.
+                    */
+                    chip8->i_reg += chip8->v_registers[x];
+                    break;
+                }
+                case 0x29: { // Fx29 -> LD F, Vx
+                    /*
+                        Set I = location of sprite for digit Vx. 
+                        The value of I is set to the location for the hexadecimal sprite
+                        corresponding to the value of Vx. 
+                        See section 2.4, Display, for more information on the Chip-8 hexadecimal
+                        font. To obtain this value, multiply VX by 5 
+                        (all font data stored in first 80 bytes of memory).
+                    */
+                    chip8->i_reg = FONT_START_ADDRESS + (chip8->v_registers[x] * 5);
+                    break;
+                }
+                case 0x33: { // Fx33 -> LD B, Vx
+                    /*
+                        Store BCD representation of Vx in memory locations I, I+1, and I+2. 
+                        The interpreter takes the decimal value of Vx, and places the 
+                        hundreds digit in memory at location in I, 
+                        the tens digit at location I+1, and
+                        the ones digit at location I+2.
+                    */
+                    chip8->memory[chip8->i_reg] = chip8->v_registers[x] / 100 ;
+                    chip8->memory[chip8->i_reg + 1] = (chip8->v_registers[x] / 10) % 10;
+                    chip8->memory[chip8->i_reg + 2] = chip8->v_registers[x] % 10;
+                    break;
+                }
+                case 0x55: { // Fx55 -> LD [I], Vx
+                    /*
+                        Stores V0 to VX in memory starting at address I. 
+                        I is then set to I + x + 1.
+                    */
+                    for (uint8_t i = 0; i < NUM_REGISTERS; i++)
+                        chip8->memory[chip8->i_reg + i] = chip8->v_registers[i];
+                    // TODO: test if i_reg update is required? 
+                    break;
+                }
+                case 0x65: { // Fx65 -> LD Vx, [I]
+                    /*
+                        Fills V0 to VX with values from memory starting at address I. 
+                        I is then set to I + x + 1.
+                    */
+                    for (uint8_t i = 0; i < NUM_REGISTERS; i++)
+                        chip8->v_registers[i] = chip8->memory[chip8->i_reg + i];
+                    break;
+                }
+            }
             break;
         }
     }
+    chip8->pc += 2;
     
 }
 
@@ -295,4 +440,12 @@ void update_timers(chip8_t* chip8, uint32_t* last_timer_update) {
         }
         *last_timer_update = current_time;
     }
+}
+
+void log_state(chip8_t* chip8) {
+    uint16_t opcode = (chip8->memory[chip8->pc] << 8) | chip8->memory[chip8->pc+1];
+    printf("[0x%4X] 0x%4X | V0-VF[", chip8->pc, opcode);
+    for (int i = 0; i < NUM_REGISTERS; i++)
+        printf("%02X ", chip8->v_registers[i]);
+    printf("]\n");
 }

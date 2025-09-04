@@ -376,7 +376,9 @@ bool op_Ex9E(chip8_t* chip8, uint16_t opcode) { // SKP Vx
         Checks the keyboard, and if the key corresponding to the value 
         of Vx is currently in the down position, PC is increased by 2. 
     */
-    if (chip8->keypad[get_x(opcode)] == 1)
+    uint8_t x = get_x(opcode);
+    uint8_t key_value = chip8->V[x]; 
+    if (chip8->keypad[chip8->V[key_value]] == 1)
         chip8->pc += 2;
     return false;
 }

@@ -6,7 +6,7 @@
 #include "config.h"
 
 // --- Window Dimensions ---
-const int SCALE_FACTOR = 1;
+const int SCALE_FACTOR = 10;
 const int SCREEN_WIDTH = DISPLAY_WIDTH * SCALE_FACTOR;
 const int SCREEN_HEIGHT = DISPLAY_HEIGHT * SCALE_FACTOR;
 
@@ -16,30 +16,27 @@ void handle_input(chip8_t* chip8, bool* running);
 
 int main(int argc, char *argv[]) {
     chip8_config config;
-    if (parse_arguments(argc, argv, &config) != 0) {
+    if (parse_arguments(argc, argv, &config) != 0)
         return 1;
-    }
+    
     printf("\nPress Enter to continue...");
-
     int c;
     while ((c = getchar()) != '\n' && c != EOF) { };
 
     chip8_t chip8;
     chip8_initialize(&chip8);
-
-    
-
+    chip8_load_rom(&chip8, config.rom_path);
     // SDL init
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         fprintf(stderr, "Could not initialize SDL: %s\n", SDL_GetError());
         return 1;
     }
     SDL_Window* window = SDL_CreateWindow("CHIP-8 Emulator", 
-                                            SDL_WINDOWPOS_UNDEFINED, 
-                                            SDL_WINDOWPOS_UNDEFINED, 
-                                            SCREEN_WIDTH, 
-                                            SCREEN_HEIGHT, 
-                                            SDL_WINDOW_SHOWN);
+                                           SDL_WINDOWPOS_UNDEFINED, 
+                                           SDL_WINDOWPOS_UNDEFINED, 
+                                           SCREEN_WIDTH, 
+                                           SCREEN_HEIGHT, 
+                                           SDL_WINDOW_SHOWN);
     if (!window) {
         fprintf(stderr, "Could not create window: %s\n", SDL_GetError());
         return 1;
@@ -55,17 +52,14 @@ int main(int argc, char *argv[]) {
     uint32_t last_timer_update = SDL_GetTicks();
     bool running = true;
     while (running) {
-        // Handle input
         handle_input(&chip8, &running);
 
-        // Emulate one cycle of the CPU
         chip8_emulate_cycle(&chip8);
 
-        // Update chip8 timers
         update_timers(&chip8, &last_timer_update);
 
         // Render the display
-        if (1) {
+        if (chip8.draw_flag) {
             render_graphics(renderer, chip8.display);
             chip8.draw_flag = false;
         }

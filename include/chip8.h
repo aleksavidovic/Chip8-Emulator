@@ -16,10 +16,10 @@ typedef struct {
     uint8_t memory[MEMORY_SIZE];
     uint8_t display[DISPLAY_WIDTH * DISPLAY_HEIGHT];
     uint16_t pc;
-    uint16_t i_reg;
+    uint16_t I;
     uint16_t stack[STACK_LEVELS];
-    uint8_t stack_pointer;
-    uint8_t v_registers[NUM_REGISTERS];
+    uint8_t stack_pointer; // points to the FIRST EMPTY slot
+    uint8_t V[NUM_REGISTERS];
     uint8_t delay_timer;
     uint8_t sound_timer;
     uint8_t keypad[NUM_KEYS];

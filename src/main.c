@@ -5,14 +5,8 @@
 #include "chip8.h"
 #include "config.h"
 
-// --- Window Dimensions ---
-const int SCALE_FACTOR = 10;
-const int SCREEN_WIDTH = DISPLAY_WIDTH * SCALE_FACTOR;
-const int SCREEN_HEIGHT = DISPLAY_HEIGHT * SCALE_FACTOR;
-
-void render_graphics(SDL_Renderer *renderer, const uint8_t display[]);
+void render_graphics(SDL_Renderer *renderer, const uint8_t display[], uint8_t scale);
 void handle_input(chip8_t* chip8, bool* running);
-// void log_state();
 
 int main(int argc, char *argv[]) {
     chip8_config config;
@@ -26,11 +20,16 @@ int main(int argc, char *argv[]) {
     chip8_t chip8;
     chip8_initialize(&chip8, &config);
     chip8_load_rom(&chip8, config.rom_path);
+
+    const int SCREEN_WIDTH = DISPLAY_WIDTH * config.scale_factor;
+    const int SCREEN_HEIGHT = DISPLAY_HEIGHT * config.scale_factor;
+
     // SDL init
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         fprintf(stderr, "Could not initialize SDL: %s\n", SDL_GetError());
         return 1;
     }
+
     SDL_Window* window = SDL_CreateWindow("CHIP-8 Emulator", 
                                            SDL_WINDOWPOS_UNDEFINED, 
                                            SDL_WINDOWPOS_UNDEFINED, 
@@ -58,13 +57,11 @@ int main(int argc, char *argv[]) {
 
         update_timers(&chip8, &last_timer_update);
 
-        // Render the display
         if (chip8.draw_flag) {
-            render_graphics(renderer, chip8.display);
+            render_graphics(renderer, chip8.display, config.scale_factor);
             chip8.draw_flag = false;
         }
 
-        // Control the speed of emulation
         SDL_Delay(1);
     }
     
@@ -72,7 +69,7 @@ int main(int argc, char *argv[]) {
 }
 
 
-void render_graphics(SDL_Renderer *renderer, const uint8_t display[]) {
+void render_graphics(SDL_Renderer *renderer, const uint8_t display[], uint8_t scale) {
     /*
         1. Iterate through display array
             - Use two for loops for simpler scaled_x and scaled_y calc
@@ -89,10 +86,10 @@ void render_graphics(SDL_Renderer *renderer, const uint8_t display[]) {
         for (int x = 0; x < 64; x++) {
             if (display[(y * 64) + x] == 1) {
                 SDL_Rect pixel_rect = {
-                        .x = x * SCALE_FACTOR,
-                        .y = y * SCALE_FACTOR,
-                        .w = SCALE_FACTOR,
-                        .h = SCALE_FACTOR 
+                        .x = x * scale,
+                        .y = y * scale,
+                        .w = scale,
+                        .h = scale 
                 };
                 SDL_RenderFillRect(renderer, &pixel_rect);
             } 

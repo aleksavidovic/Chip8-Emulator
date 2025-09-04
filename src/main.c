@@ -24,7 +24,7 @@ int main(int argc, char *argv[]) {
     while ((c = getchar()) != '\n' && c != EOF) { };
 
     chip8_t chip8;
-    chip8_initialize(&chip8);
+    chip8_initialize(&chip8, &config);
     chip8_load_rom(&chip8, config.rom_path);
     // SDL init
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {

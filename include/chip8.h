@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "config.h"
 
 #define MEMORY_SIZE 4096
 #define DISPLAY_WIDTH 64
@@ -26,7 +27,7 @@ typedef struct {
     bool draw_flag;
 } chip8_t;
 
-void chip8_initialize(chip8_t* chip8);
+void chip8_initialize(chip8_t* chip8, chip8_config* config);
 void chip8_load_rom(chip8_t* chip8, const char* filename);
 void chip8_emulate_cycle(chip8_t* chip8);
 void update_timers(chip8_t* chip8, uint32_t* last_timer_update);

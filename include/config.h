@@ -10,6 +10,7 @@ typedef struct {
     int64_t cycles_to_run;
     uint32_t clock_rate; 
     uint32_t scale_factor; 
+    bool legacy_mode;
 } chip8_config;
 
 int parse_arguments(int argc, char *argv[], chip8_config *config);

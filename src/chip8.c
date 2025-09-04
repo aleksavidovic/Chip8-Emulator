@@ -3,6 +3,7 @@
 #include <SDL2/SDL.h>
 #include <stdbool.h>
 #include "chip8.h"
+#include "config.h"
 #include <stdlib.h>
 #include <time.h>
 
@@ -27,12 +28,13 @@ static const uint8_t chip8_font_set[80] = {
     0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 };
 
-void chip8_initialize(chip8_t* chip8) {
-    memset(chip8, 0, sizeof(chip8_t));
-    chip8->pc = 0x200;
-    srand(time(NULL));
-    memcpy(&chip8->memory[FONT_START_ADDRESS], chip8_font_set, sizeof(chip8_font_set));
-}
+/*
+    All opcodes follow one of the following patterns:
+        - ?nnn
+        - ?xy?
+        - ?xkk
+        - ?xkn
+*/
 
 void chip8_load_rom(chip8_t* chip8, const char* filename) {
     FILE* rom_file = fopen(filename, "rb");
@@ -74,7 +76,6 @@ static inline uint8_t get_n(uint16_t opcode) {
 static inline uint16_t get_nnn(uint16_t opcode) {
     return (opcode & 0x0FFF);
 }
-
 
 bool op_unknown(chip8_t* chip8, uint16_t opcode) {
     fprintf(stderr, "Unknown opcode: 0x%04X\n", opcode);
@@ -160,7 +161,6 @@ bool op_7xkk(chip8_t* chip8, uint16_t opcode) { // 7xkk -> ADD Vx, byte
 }
 
 bool op_8xxx(chip8_t* chip8, uint16_t opcode);
-
 
 bool op_8xy0(chip8_t* chip8, uint16_t opcode) { // 8xy0 -> LD Vx, Vy
     /*
@@ -484,6 +484,17 @@ bool op_Fx55(chip8_t* chip8, uint16_t opcode) { // Fx55 -> LD [I], Vx
     uint8_t x = get_x(opcode);
     for (int i = 0; i <= x; i++)
         chip8->memory[chip8->I + i] = chip8->V[i];
+    return false;
+}
+
+bool op_Fx55_legacy(chip8_t* chip8, uint16_t opcode) { // Fx55 -> LD [I], Vx
+    /*
+        Stores V0 to VX in memory starting at address I. 
+        Sets I = I + x + 1;
+    */
+    uint8_t x = get_x(opcode);
+    for (int i = 0; i <= x; i++)
+        chip8->memory[chip8->I + i] = chip8->V[i];
     chip8->I += x + 1;
     return false;
 }
@@ -495,16 +506,20 @@ bool op_Fx65(chip8_t* chip8, uint16_t opcode) { // Fx65 -> LD Vx, [I]
     uint8_t x = get_x(opcode);
     for (int i = 0; i <= x ; i++)
         chip8->V[i] = chip8->memory[chip8->I + i];
+    return false;
+}
+
+bool op_Fx65_legacy(chip8_t* chip8, uint16_t opcode) { // Fx65 -> LD Vx, [I]
+    /*
+        Fills V0 to VX with values from memory starting at address I. 
+        Sets I = I + x + 1;
+    */
+    uint8_t x = get_x(opcode);
+    for (int i = 0; i <= x ; i++)
+        chip8->V[i] = chip8->memory[chip8->I + i];
     chip8->I += x + 1;
     return false;
 }
-/*
-    All opcodes follow one of the following patterns:
-        - ?nnn
-        - ?xy?
-        - ?xkk
-        - ?xkn
-*/
 
 static opcode_func_t opcode_table[16] = {
     [0x0] = op_0xxx,  // Special case for 00E0 and 00EE
@@ -612,6 +627,17 @@ bool op_Fxxx(chip8_t* chip8, uint16_t opcode) {
         return func(chip8, opcode);
     }
     return op_unknown(chip8, opcode);
+}
+
+void chip8_initialize(chip8_t* chip8, chip8_config* config) {
+    memset(chip8, 0, sizeof(chip8_t));
+    chip8->pc = 0x200;
+    if (config->legacy_mode) {
+        opcode_Fxxx_table[0x55] = op_Fx55_legacy;
+        opcode_Fxxx_table[0x65] = op_Fx65_legacy;
+    }
+    srand(time(NULL));
+    memcpy(&chip8->memory[FONT_START_ADDRESS], chip8_font_set, sizeof(chip8_font_set));
 }
 
 void chip8_emulate_cycle(chip8_t* chip8) { // Fetch->Decode->Execute opcodes 

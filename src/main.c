@@ -65,7 +65,7 @@ int main(int argc, char *argv[]) {
         }
 
         // Control the speed of emulation
-        SDL_Delay(2);
+        SDL_Delay(1);
     }
     
     return 0;
@@ -114,6 +114,7 @@ void handle_input(chip8_t* chip8, bool* running) {
             case SDL_KEYDOWN: {
                 // A key was pressed
                 SDL_Keycode key = event.key.keysym.sym;
+                printf("-------Keypress detected-----------\n");
                 switch (key) {
                     case SDLK_1: chip8->keypad[0x1] = 1; break;
                     case SDLK_2: chip8->keypad[0x2] = 1; break;
@@ -156,6 +157,7 @@ void handle_input(chip8_t* chip8, bool* running) {
                     case SDLK_c: chip8->keypad[0xB] = 0; break;
                     case SDLK_v: chip8->keypad[0xF] = 0; break;
                 }
+                break;
             }
         }
     }

@@ -91,7 +91,7 @@ bool op_00E0(chip8_t* chip8, uint16_t opcode) {
 
 bool op_00EE(chip8_t* chip8, uint16_t opcode) {
     chip8->pc = chip8->stack[--chip8->stack_pointer];
-    return true;
+    return false;
 }
 
 bool op_1nnn(chip8_t* chip8, uint16_t opcode) { // 1nnn -> JP addr
@@ -379,7 +379,7 @@ bool op_Ex9E(chip8_t* chip8, uint16_t opcode) { // SKP Vx
     */
     uint8_t x = get_x(opcode);
     uint8_t key_value = chip8->V[x]; 
-    if (chip8->keypad[chip8->V[key_value]] == 1)
+    if (chip8->keypad[key_value] == 1)
         chip8->pc += 2;
     return false;
 }
@@ -392,7 +392,7 @@ bool op_ExA1(chip8_t* chip8, uint16_t opcode) { // SKNP Vx
     */
     uint8_t x = get_x(opcode);
     uint8_t key_value = chip8->V[x]; 
-    if (chip8->keypad[chip8->V[key_value]] == 0)
+    if (chip8->keypad[key_value] == 0)
         chip8->pc += 2;
     return false;
 }
@@ -484,6 +484,7 @@ bool op_Fx55(chip8_t* chip8, uint16_t opcode) { // Fx55 -> LD [I], Vx
     uint8_t x = get_x(opcode);
     for (int i = 0; i <= x; i++)
         chip8->memory[chip8->I + i] = chip8->V[i];
+    chip8->I += x + 1;
     return false;
 }
 
@@ -494,6 +495,7 @@ bool op_Fx65(chip8_t* chip8, uint16_t opcode) { // Fx65 -> LD Vx, [I]
     uint8_t x = get_x(opcode);
     for (int i = 0; i <= x ; i++)
         chip8->V[i] = chip8->memory[chip8->I + i];
+    chip8->I += x + 1;
     return false;
 }
 /*

@@ -4,9 +4,12 @@
 #include <stdbool.h>
 #include "chip8.h"
 #include "config.h"
+#include "debug.h"
 
 void render_graphics(SDL_Renderer *renderer, const uint8_t display[], uint8_t scale);
 void handle_input(chip8_t* chip8, bool* running);
+
+#define DUMP_FILENAME "dump.txt" 
 
 int main(int argc, char *argv[]) {
     chip8_config config;
@@ -50,7 +53,21 @@ int main(int argc, char *argv[]) {
     // Main emulation loop
     uint32_t last_timer_update = SDL_GetTicks();
     bool running = true;
+	uint64_t cycles_elapsed = 0;
     while (running) {
+		int sc;
+		if (config.step_mode) {
+			printf("Emulation cycle: %15lu | Press <Enter> to continue. Type D to dump state and exit...\n", ++cycles_elapsed);
+			while ((sc = getchar()) != '\n' && sc != EOF) {
+				if (sc == 'D' || sc == 'd') {
+					if(dump_state(&chip8, &config, DUMP_FILENAME))
+						printf("Dump unsuccessful.\n");
+					printf("Exiting...\n");
+					return 0; 
+				}
+			};
+		}
+			
         handle_input(&chip8, &running);
 
         chip8_emulate_cycle(&chip8);

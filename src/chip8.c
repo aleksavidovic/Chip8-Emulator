@@ -85,6 +85,7 @@ bool op_0xxx(chip8_t* chip8, uint16_t opcode);
 
 bool op_00E0(chip8_t* chip8, uint16_t opcode) {
     memset(chip8->display, 0, sizeof(chip8->display));
+    chip8->draw_flag = true;
     return false;
 }
 

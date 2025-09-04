@@ -576,18 +576,39 @@ bool op_0xxx(chip8_t* chip8, uint16_t opcode) {
 }
 
 bool op_Exxx(chip8_t* chip8, uint16_t opcode) {
-    opcode_func_t func_Exxx = opcode_Exxx_table[get_kk(opcode)];
-    return func_Exxx(chip8, opcode);
+    uint8_t kk = get_kk(opcode);
+    if (kk >= sizeof(opcode_Exxx_table) / sizeof(opcode_func_t)) {
+        return op_unknown(chip8, opcode);
+    }
+    opcode_func_t func = opcode_Exxx_table[kk];
+    if (func) {
+        return func(chip8, opcode);
+    }
+    return op_unknown(chip8, opcode);
 }
 
 bool op_8xxx(chip8_t* chip8, uint16_t opcode) {
-    opcode_func_t func_8xxx = opcode_8xxx_table[get_n(opcode)];
-    return func_8xxx(chip8, opcode);
+    uint8_t n = get_n(opcode);
+    if (n >= sizeof(opcode_8xxx_table) / sizeof(opcode_func_t)) {
+        return op_unknown(chip8, opcode);
+    }
+    opcode_func_t func = opcode_8xxx_table[n];
+    if (func) {
+        return func(chip8, opcode);
+    }
+    return op_unknown(chip8, opcode);
 }
 
 bool op_Fxxx(chip8_t* chip8, uint16_t opcode) {
-    opcode_func_t func_Fxxx = opcode_Fxxx_table[get_kk(opcode)];
-    return func_Fxxx(chip8, opcode);
+        uint8_t kk = get_kk(opcode);
+    if (kk >= sizeof(opcode_Fxxx_table) / sizeof(opcode_func_t)) {
+        return op_unknown(chip8, opcode);
+    }
+    opcode_func_t func = opcode_Fxxx_table[kk];
+    if (func) {
+        return func(chip8, opcode);
+    }
+    return op_unknown(chip8, opcode);
 }
 
 void chip8_emulate_cycle(chip8_t* chip8) { // Fetch->Decode->Execute opcodes 

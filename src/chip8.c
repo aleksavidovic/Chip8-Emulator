@@ -389,7 +389,9 @@ bool op_ExA1(chip8_t* chip8, uint16_t opcode) { // SKNP Vx
         Checks the keyboard, and if the key corresponding to the value 
         of Vx is currently in the up position, PC is increased by 2.
     */
-    if (chip8->keypad[get_x(opcode)] == 0)
+    uint8_t x = get_x(opcode);
+    uint8_t key_value = chip8->V[x]; 
+    if (chip8->keypad[chip8->V[key_value]] == 0)
         chip8->pc += 2;
     return false;
 }

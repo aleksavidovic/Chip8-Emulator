@@ -117,6 +117,7 @@ The 16-key CHIP-8 keypad is mapped to the left side of a standard QWERTY keyboar
 
 This project is a solid foundation, and there are several planned enhancements to make it a more complete and feature-rich emulator:
 
+* **Testing:** Perform tests using test roms like [Timendus/chip8-test-suite](https://github.com/Timendus/chip8-test-suite) and publish the results. In case of failing tests, make it a priority to get them working.
 * **Sound Support:** Implement beep sounds when the sound timer (ST) is active using SDL\_mixer or a similar library.
 * **Advanced Debugging Tools:**
 

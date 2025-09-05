@@ -49,6 +49,12 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Could not create renderer: %s\n", SDL_GetError());
         return 1;
     }
+	
+	// Create memory visualiser window
+	// TODO: Make this work based on -v flag
+	MemoryVisualiser_t mem_vis;
+	if (!memory_visualiser_init(&mem_vis))
+		printf("Memory visualiser initialisastion failed.\n");
 
     // Main emulation loop
     uint32_t last_timer_update = SDL_GetTicks();

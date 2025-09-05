@@ -59,11 +59,13 @@ int main(int argc, char *argv[]) {
 	if (!memory_visualiser_init(&mem_vis, (main_x + main_w)))
 		printf("Memory visualiser initialisastion failed.\n");
 
-    // Main emulation loop
     uint32_t last_timer_update = SDL_GetTicks();
     bool running = true;
 	int64_t cycles_elapsed = 0;
+	
+    // --- Main emulation loop --- 
     while (running) {
+		render_memory(mem_vis.renderer, chip8.memory);
 		int sc;
 		if (config.step_mode || config.cycles_to_run) cycles_elapsed++;
 		if (config.step_mode) {
@@ -99,7 +101,7 @@ int main(int argc, char *argv[]) {
             chip8.draw_flag = false;
         }
 
-        SDL_Delay(1);
+        SDL_Delay(4);
     }
     
     return 0;
@@ -112,7 +114,7 @@ void render_graphics(SDL_Renderer *renderer, const uint8_t display[], uint8_t sc
             - Use two for loops for simpler scaled_x and scaled_y calc
         2. For each pixel, IF a pixel is "on" define a SDL_Rect (x, y, h=10, w=10)
         3. Tell the renderer to draw it
-        (x * 64) + y
+        (y * 64) + x
     */ 
     
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255); // Set background color to black

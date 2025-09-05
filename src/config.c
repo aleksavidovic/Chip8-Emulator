@@ -15,6 +15,20 @@ static void print_usage(const char *prog_name) {
     fprintf(stderr, "  -S, --scale <factor>  Set the display scale factor (default: 10)\n");
 }
 
+void print_emulator_configuration(chip8_config *config) {
+    printf("Emulator Configuration:\n");
+    printf("-----------------------\n");
+    printf("ROM Path:      %s\n", config->rom_path);
+    printf("Step Mode:     %s\n", config->step_mode ? "ON" : "OFF");
+    printf("Legacy Mode:   %s\n", config->legacy_mode ? "ON" : "OFF");
+    if (config->cycles_to_run != -1) {
+        printf("Cycles to Run: %ld\n", config->cycles_to_run);
+    }
+    printf("Clock Rate:    %u Hz\n", config->clock_rate); // Use %u for unsigned
+    printf("Scale Factor:  %ux\n", config->scale_factor); // Use %u for unsigned
+    printf("-----------------------\n");
+}
+
 static int parse_int64(const char *str, int64_t *val) {
     char *endptr;
     errno = 0;
@@ -88,18 +102,8 @@ int parse_arguments(int argc, char *argv[], chip8_config *config) {
     }
     config->rom_path = argv[optind];
 
+	print_emulator_configuration(config);
     // 5. Print final configuration
-    printf("Emulator Configuration:\n");
-    printf("-----------------------\n");
-    printf("ROM Path:      %s\n", config->rom_path);
-    printf("Step Mode:     %s\n", config->step_mode ? "ON" : "OFF");
-    printf("Legacy Mode:   %s\n", config->legacy_mode ? "ON" : "OFF");
-    if (config->cycles_to_run != -1) {
-        printf("Cycles to Run: %ld\n", config->cycles_to_run);
-    }
-    printf("Clock Rate:    %u Hz\n", config->clock_rate); // Use %u for unsigned
-    printf("Scale Factor:  %ux\n", config->scale_factor); // Use %u for unsigned
-    printf("-----------------------\n");
 
     return 0;
 }

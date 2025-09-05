@@ -14,5 +14,6 @@ typedef struct {
 } chip8_config;
 
 int parse_arguments(int argc, char *argv[], chip8_config *config);
+void print_emulator_configuration(chip8_config *config);
 
 #endif // CONFIG_H

@@ -53,11 +53,12 @@ int main(int argc, char *argv[]) {
     // Main emulation loop
     uint32_t last_timer_update = SDL_GetTicks();
     bool running = true;
-	uint64_t cycles_elapsed = 0;
+	int64_t cycles_elapsed = 0;
     while (running) {
 		int sc;
+		if (config.step_mode || config.cycles_to_run) cycles_elapsed++;
 		if (config.step_mode) {
-			printf("Emulation cycle: %15lu | Press <Enter> to continue. Type D to dump state and exit...\n", ++cycles_elapsed);
+			printf("Emulation cycle: %15lu | Press <Enter> to continue. Type D to dump state and exit...\n", cycles_elapsed);
 			while ((sc = getchar()) != '\n' && sc != EOF) {
 				if (sc == 'D' || sc == 'd') {
 					if(dump_state(&chip8, &config, DUMP_FILENAME))
@@ -66,6 +67,16 @@ int main(int argc, char *argv[]) {
 					return 0; 
 				}
 			};
+		}
+		if (config.cycles_to_run == cycles_elapsed) {
+			printf("%ld cycles completed. Dump state before exiting? (Y/N) > ", cycles_elapsed);
+			sc = getchar();
+			if (sc == 'Y' || sc == 'y') {
+				if(dump_state(&chip8, &config, DUMP_FILENAME))
+					printf("Dump unsuccessful.\n");
+				printf("Exiting...\n");
+				return 0; 
+			}
 		}
 			
         handle_input(&chip8, &running);

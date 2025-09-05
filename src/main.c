@@ -53,7 +53,10 @@ int main(int argc, char *argv[]) {
 	// Create memory visualiser window
 	// TODO: Make this work based on -v flag
 	MemoryVisualiser_t mem_vis;
-	if (!memory_visualiser_init(&mem_vis))
+	int main_x, main_y, main_w, main_h;
+	SDL_GetWindowPosition(window, &main_x, &main_y);
+	SDL_GetWindowSize(window, &main_w, &main_h);
+	if (!memory_visualiser_init(&mem_vis, (main_x + main_w)))
 		printf("Memory visualiser initialisastion failed.\n");
 
     // Main emulation loop

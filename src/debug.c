@@ -4,9 +4,9 @@
 #include "config.h"
 #include "debug.h"
 
-int memory_visualiser_init(MemoryVisualiser_t* mem_vis) {
-    SDL_Window* mem_vis_window = SDL_CreateWindow("CHIP-8 Emulator", 
-                                           SDL_WINDOWPOS_UNDEFINED, 
+int memory_visualiser_init(MemoryVisualiser_t* mem_vis, int x) {
+    SDL_Window* mem_vis_window = SDL_CreateWindow("Memory Visualiser", 
+                                           x, 
                                            SDL_WINDOWPOS_UNDEFINED, 
                                            MEM_VIS_SCREEN_WIDTH, 
                                            MEM_VIS_SCREEN_HEIGHT, 

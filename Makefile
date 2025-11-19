@@ -1,6 +1,6 @@
 # Compiler and flags
 CC = gcc
-CFLAGS = -Wall -Wextra -Iinclude -std=c11
+CFLAGS = -fopt-info-vec-all -Wall -Wextra -Iinclude -std=c11 
 LIBS = -lSDL2
 
 # Project structure

@@ -6,6 +6,10 @@
 #include "config.h"
 #include "debug.h"
 
+const int FPS = 60;
+const int FRAME_DELAY = 1000 / FPS;
+const int INSTRUCTIONS_PER_FRAME = 700 / FPS;
+
 void render_graphics(SDL_Renderer *renderer, const uint8_t display[], uint8_t scale);
 void handle_input(chip8_t* chip8, bool* running);
 

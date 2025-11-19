@@ -69,6 +69,8 @@ int main(int argc, char *argv[]) {
 	
     // --- Main emulation loop --- 
     while (running) {
+        uint32_t frame_start = SDL_GetTicks();
+
 		render_memory(mem_vis.renderer, chip8.memory);
 		int sc;
 		if (config.step_mode || config.cycles_to_run) cycles_elapsed++;
@@ -95,8 +97,9 @@ int main(int argc, char *argv[]) {
 		}
 			
         handle_input(&chip8, &running);
-
-        chip8_emulate_cycle(&chip8);
+        for (int i = 0; i < INSTRUCTIONS_PER_FRAME; i++) {
+            chip8_emulate_cycle(&chip8);
+        }
 
         update_timers(&chip8, &last_timer_update);
 
@@ -105,7 +108,10 @@ int main(int argc, char *argv[]) {
             chip8.draw_flag = false;
         }
 
-        SDL_Delay(4);
+        uint32_t frame_time = SDL_GetTicks() - frame_start;
+        if (frame_time < FRAME_DELAY) {
+            SDL_Delay(FRAME_DELAY - frame_time);
+        }
     }
     
     return 0;
